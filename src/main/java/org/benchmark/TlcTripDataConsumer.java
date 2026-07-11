@@ -25,6 +25,15 @@ public class TlcTripDataConsumer implements Runnable {
     private final MetricsDashboard metricsDashboard;
     private final Config config;
 
+    private final CsvMapper MAPPER = createMapper();
+    private final CsvSchema SCHEMA = MAPPER.schemaFor(TlcTripData.class);
+
+    private static CsvMapper createMapper() {
+        return CsvMapper.builder()
+            .addModule(new JavaTimeModule())
+            .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+            .build();
+    }
     /**
      * Executes the polling consumption cycle. Iterates continuously until intercepting
      * an operational poison pill item.
@@ -33,18 +42,11 @@ public class TlcTripDataConsumer implements Runnable {
     public void run() {
         log.info("{} consumer thread running.", Thread.currentThread().getName());
 
-        CsvMapper mapper = CsvMapper.builder().addModule(new JavaTimeModule())
-            .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES).build();
-
-        // Generate the schema directly from the POJO columns instead of parsing a header
-        CsvSchema schema = mapper.schemaFor(TlcTripData.class);
-
-        String tlcTripDataString = null;
         String poisonPill = config.getPoisonPill();
 
         while (true) {
             try {
-                tlcTripDataString = dataQueue.take();
+                String tlcTripDataString = dataQueue.take();
 
                 // Poison Pill interception rule
                 if (poisonPill.equals(tlcTripDataString)) {
@@ -57,8 +59,8 @@ public class TlcTripDataConsumer implements Runnable {
                     continue;
                 }
 
-                TlcTripData tlcTripData = mapper.readerFor(TlcTripData.class)
-                    .with(schema)
+                TlcTripData tlcTripData = MAPPER.readerFor(TlcTripData.class)
+                    .with(SCHEMA)
                     .readValue(tlcTripDataString);
 
                 metricsDashboard.getTotalRows().add(1);

@@ -73,7 +73,7 @@ public class Main {
         // Initialize and load config
         Config config = loadConfig();
         // Bounded queue ensures strict control over memory footprints under heavy backpressure
-        BlockingQueue<String> dataQueue = new ArrayBlockingQueue<String>(config.getQueueCapacity());
+        BlockingQueue<String> dataQueue = new ArrayBlockingQueue<>(config.getQueueCapacity());
         TlcTripDataProducer tlcTripDataProducer = new TlcTripDataProducer(dataQueue, config);
         MetricsDashboard metricsDashboard = new MetricsDashboard();
 
@@ -88,11 +88,10 @@ public class Main {
         }
 
         LocalDateTime timeAtEnd = LocalDateTime.now();
+        long totalTimeTaken = Duration.between(timeAtStart, timeAtEnd).toSeconds();
         log.info(metricsDashboard.toString());
-        log.info("Time at start: {}", timeAtStart);
-        log.info("Time at end: {}", timeAtEnd);
-        log.info("Total time taken: {} seconds.",
-            Duration.between(timeAtStart, timeAtEnd).toSeconds());
+        log.info("Total time taken: {} seconds.", totalTimeTaken);
+        log.info("Throughput: {} records/sec.", metricsDashboard.getTotalRows().sum() / totalTimeTaken);
     }
 
     /**
@@ -106,7 +105,7 @@ public class Main {
                           NEW YORK CITY TLC HIGH-THROUGHPUT CONCURRENT ANALYTICS ENGINE
             ========================================================================================
             PURPOSE:
-            This system serves as an enterprise-grade performance blueprint for high-volume 
+            This system serves as an enterprise-grade performance blueprint for high-volume
             batch processing, low-latency streaming simulation, and non-blocking concurrency evaluation.
             
             ARCHITECTURAL HIGHLIGHTS:
