@@ -4,7 +4,7 @@ An enterprise-grade performance blueprint for high-volume batch processing, stre
 
 ---
 
-## 🚀 Purpose
+## Purpose
 
 This project is a high-performance benchmarking sandbox designed to demonstrate the **Producer-Consumer pattern**, **bounded memory management (Backpressure)**, and **lock-free thread synchronization**.
 
