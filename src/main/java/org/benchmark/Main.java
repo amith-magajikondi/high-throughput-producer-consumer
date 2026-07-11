@@ -84,7 +84,7 @@ public class Main {
             }
 
             // Begin single-threaded file stream ingestion
-            tlcTripDataProducer.runProducerV2();
+            tlcTripDataProducer.run();
         }
 
         LocalDateTime timeAtEnd = LocalDateTime.now();
@@ -103,7 +103,7 @@ public class Main {
         log.info("""
             
             ========================================================================================
-            🚀 NEW YORK CITY TLC HIGH-THROUGHPUT CONCURRENT ANALYTICS ENGINE
+                          NEW YORK CITY TLC HIGH-THROUGHPUT CONCURRENT ANALYTICS ENGINE
             ========================================================================================
             PURPOSE:
             This system serves as an enterprise-grade performance blueprint for high-volume 

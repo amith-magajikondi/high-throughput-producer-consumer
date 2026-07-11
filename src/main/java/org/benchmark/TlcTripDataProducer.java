@@ -30,7 +30,7 @@ public class TlcTripDataProducer {
      * and managing queue boundary allocations.
      * * @throws InterruptedException If the thread is interrupted while waiting to place elements into a filled queue.
      */
-    public void runProducerV2() throws InterruptedException {
+    public void run() throws InterruptedException {
         log.info("Producer running.");
         try (BufferedReader bufferedReader = new BufferedReader(
             new FileReader(config.getTlcDatasetFilePath()), 16384)) {
