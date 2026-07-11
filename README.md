@@ -23,7 +23,7 @@ By ingestion and processing of millions of rows from the New York City Taxi & Li
 ### The Optimization Strategy
 In the initial iteration, the single Producer thread handled both file reading and heavy Jackson CSV object inflation sequentially before placing items onto the queue. This starved the consumer pool, making the text parser the primary bottleneck.
 
-By refactoring the pipeline to drop raw, un-parsed `String` rows directly into the `BlockingQueue`, the Producer thread was freed up to focus entirely on sequential disk read capacity. The heavy computation—string tokenization, datetime parsing, data cleaning, and metric transformations—was completely shifted downstream to the parallel worker array. This structural shift cut total processing latency by over **55%** and maxed out multicore CPU efficiency.
+By refactoring the pipeline to drop raw, un-parsed `String` rows directly into the `BlockingQueue`, the Producer thread was freed up to focus entirely on sequential disk read capacity. The heavy computation string tokenization, datetime parsing, data cleaning, and metric transformations was completely shifted downstream to the parallel worker array. This structural shift cut total processing latency by over **55%** and maxed out multicore CPU efficiency.
 
 ---
 
