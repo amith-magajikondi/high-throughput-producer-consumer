@@ -1,3 +1,6 @@
+# Ignore local environment configurations
+config.properties
+
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

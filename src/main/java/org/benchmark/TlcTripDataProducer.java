@@ -1,41 +1,63 @@
 package org.benchmark;
 
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import tools.jackson.databind.DeserializationFeature;
-import tools.jackson.databind.MappingIterator;
-import tools.jackson.dataformat.csv.CsvMapper;
-import tools.jackson.dataformat.csv.CsvSchema;
-import tools.jackson.datatype.jsr310.JavaTimeModule;
-
-import java.io.File;
+import java.io.*;
 import java.util.concurrent.BlockingQueue;
 
-@RequiredArgsConstructor
+/**
+ * Responsible for single-threaded file parsing and work distribution.
+ * <p>
+ * This class streams rows sequentially from a local disk space to minimize memory overhead.
+ * The streamed rows are systematically pushed to a bounded queue.
+ * When execution finishes, it broadcasts terminal elements to safely clear worker allocations.
+ * </p>
+ */
 @Slf4j
 public class TlcTripDataProducer {
-    private final BlockingQueue<TlcTripData> dataQueue;
 
-    private final String FILE_PATH = "C:\\Users\\Lenovo\\Downloads\\archive\\yellow_tripdata_2015-01.csv";
+    /** The target queue bounded buffer shared with independent consumer threads. */
+    private final BlockingQueue<String> dataQueue;
 
-    public void runProducer(BlockingQueue<TlcTripData> dataQueue) throws InterruptedException{
+    private final Config config;
+
+    public TlcTripDataProducer(BlockingQueue<String> dataQueue, Config config) {
+        this.dataQueue = dataQueue;
+        this.config = config;
+    }
+
+    /**
+     * Executes the main ingestion stream loop, reading records out of a flat CSV file
+     * and managing queue boundary allocations.
+     * * @throws InterruptedException If the thread is interrupted while waiting to place elements into a filled queue.
+     */
+    public void runProducerV2() throws InterruptedException {
         log.info("Producer running.");
-        CsvMapper mapper = CsvMapper.builder().addModule(new JavaTimeModule()).disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES).build();
+        try (BufferedReader bufferedReader = new BufferedReader(
+            new FileReader(config.getTlcDatasetFilePath()), 16384)) {
+            // Skip the first line
+            String header = bufferedReader.readLine();
 
-        CsvSchema schema = CsvSchema.emptySchema().withHeader();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                dataQueue.put(line);
+            }
 
-        MappingIterator<TlcTripData> it = mapper.readerFor(TlcTripData.class)
-                .with(schema)
-                .readValues(new File(FILE_PATH));
-
-        while (it.hasNext()) {
-            TlcTripData dataRow = it.next();
-            dataQueue.put(dataRow);
+            sendPoisonPills();
+            log.info("Producer has published all the rows.");
+        } catch (IOException e) {
+            log.error(e.getMessage());
         }
+    }
 
-        for(int i = 0; i < 6; i++){
-            dataQueue.put(new TlcTripData.TlcTripDataBuilder().dummyRow(1).build());
+    /**
+     * Appends designated dummy termination entries to the end of the data stream queue.
+     * The number of generated items matches the active thread count to prevent engine lock-up.
+     * * @throws InterruptedException If interrupted while putting terminal entries into the queue.
+     */
+    private void sendPoisonPills() throws InterruptedException {
+        log.info("Ingestion completed. Broadcasting {} poison pill packets to consumer pool.", config.getWorkerCount());
+        for (int i = 0; i < config.getWorkerCount(); i++) {
+            dataQueue.put(config.getPoisonPill());
         }
     }
 }

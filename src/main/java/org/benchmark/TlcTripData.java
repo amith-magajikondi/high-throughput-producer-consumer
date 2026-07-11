@@ -2,16 +2,47 @@ package org.benchmark;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * An immutable Data Transfer Object (DTO) mapping the structure of an incoming TLC Trip Record.
+ * <p>
+ * Contains fields matching the standard NYC Taxi scheme alongside custom operational metadata
+ * (e.g., Poison Pill identifiers) required to manage multithreaded task lifecycles cleanly.
+ * </p>
+ */
 @ToString
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Data
+@JsonPropertyOrder({
+    "VendorID",
+    "tpep_pickup_datetime",
+    "tpep_dropoff_datetime",
+    "passenger_count",
+    "trip_distance",
+    "pickup_longitude",
+    "pickup_latitude",
+    "RateCodeID",
+    "store_and_fwd_flag",
+    "dropoff_longitude",
+    "dropoff_latitude",
+    "payment_type",
+    "fare_amount",
+    "extra",
+    "mta_tax",
+    "improvement_surcharge",
+    "tip_amount",
+    "tolls_amount",
+    "total_amount"
+})
 public class TlcTripData {
+
     @JsonProperty("VendorID")
     private String vendorId;
 
@@ -70,6 +101,4 @@ public class TlcTripData {
 
     @JsonProperty("total_amount")
     private double totalAmount;
-
-    private int dummyRow = 0;
 }
